@@ -1,0 +1,6 @@
+"0","# data$Sleep.Disorder[data$Sleep.Disorder == ""None""] <- 0"
+"0","# data$Sleep.Disorder[data$Sleep.Disorder == ""Sleep Apnea""] <- 2 "
+"0","# data$Sleep.Disorder[data$Sleep.Disorder == ""Insomnia""] <- 1 "
+"0","#  # data$Sleep.Disorder <- as.numeric(data$Sleep.Disorder) "
+"0","data$Sleep.Disorder[data$Sleep.Disorder == ""Sleep Apnea""] = ""Sleep.Apnea"" "
+"0","data <- data %>% transform(Sleep.Disorder = as.factor(Sleep.Disorder)) "

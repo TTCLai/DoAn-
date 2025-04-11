@@ -1,0 +1,4 @@
+"0","ggplot(data, aes(x =data$Heart.Rate, y =data$Systolic , color= data$Sleep.Disorder))  + "
+"0","  geom_point() +"
+"0","  labs(x = ""Heart Rate"", y = ""Systolic"") + "
+"0","  geom_smooth(method = 'loess',formula = 'y ~ x',mapping = aes(x =data$Heart.Rate, y =data$Systolic , color= data$Sleep.Disorder))"

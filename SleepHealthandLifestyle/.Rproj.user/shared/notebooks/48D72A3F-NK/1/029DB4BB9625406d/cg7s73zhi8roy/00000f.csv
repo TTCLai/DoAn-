@@ -1,0 +1,6 @@
+"0","accuracy_Test <- sum(diag(table_mat)) / sum(table_mat)"
+"0","print(paste('Accuracy for test', accuracy_Test))"
+"1","[1]"
+"1"," ""Accuracy for test 0.903225806451613"""
+"1","
+"

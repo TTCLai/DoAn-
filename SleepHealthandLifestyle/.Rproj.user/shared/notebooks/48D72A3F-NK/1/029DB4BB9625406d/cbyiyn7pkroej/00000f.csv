@@ -1,0 +1,7 @@
+"0","re_pred <- predict(re_fit, "
+"0","                   test_data,"
+"0","                   type = ""class"")"
+"0","plot(test_data$Sleep.Disorder, re_pred,"
+"0","     main = "" "","
+"0","     xlab = ""Actual"","
+"0","     ylab = ""Predicted"")"

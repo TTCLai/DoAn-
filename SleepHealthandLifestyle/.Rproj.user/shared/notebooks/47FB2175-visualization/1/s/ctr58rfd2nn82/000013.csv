@@ -1,0 +1,6 @@
+"0","library(rgl)"
+"0","mycolors <- c('royalblue1', 'darkcyan', 'oldlace')"
+"0","color <- mycolors[ as.numeric(data$Sleep.Disorder) ]"
+"0","plot3d( x = data$Physical.Activity.Level, y = data$Daily.Steps, z = data$Quality.of.Sleep, type = ""s"", "
+"0","        col = color"
+"0",")"

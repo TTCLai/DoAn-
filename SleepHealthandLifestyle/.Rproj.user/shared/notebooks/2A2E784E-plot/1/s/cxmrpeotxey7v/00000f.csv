@@ -1,0 +1,5 @@
+"0",""
+"0","data %>% ggplot(aes(x = Stress.Level)) +"
+"0","  geom_histogram(fill = ""#6DA7F2"", color=""#6DA7F2"", alpha = 0.5, binwidth = 1) +"
+"0","  ggtitle(""Stress Level"") +"
+"0","  theme_minimal()"

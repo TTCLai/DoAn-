@@ -1,0 +1,7 @@
+"0",""
+"0","data %>% ggplot(aes(y= Sleep.Duration, x = Sleep.Disorder, fill = Sleep.Disorder)) +"
+"0","  geom_violin() +"
+"0","  scale_fill_viridis(discrete = TRUE, alpha = 0.6) +"
+"0","  theme_minimal() +"
+"0","  ggtitle(""Sleep Duration"") + "
+"0","  xlab("""")"

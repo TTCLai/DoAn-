@@ -1,0 +1,4 @@
+"0","ggplot(data, aes(x = BMI.Category, y = Quality.of.Sleep, fill=Sleep.Disorder)) +"
+"0","  geom_bar(stat = ""identity"", position = ""dodge"") +"
+"0","  scale_fill_manual(values = c(""None"" = ""lightpink"", ""Sleep.Apnea"" = ""darkslateblue"",""Insomnia""=""blue"")) +"
+"0","  labs(x = ""BMI Category"", y = ""Quality of Sleep"")"

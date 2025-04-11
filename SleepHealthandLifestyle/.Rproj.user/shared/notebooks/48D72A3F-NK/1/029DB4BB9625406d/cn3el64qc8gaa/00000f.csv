@@ -1,0 +1,5 @@
+"0","data$Gender <- as.factor(data$Gender)"
+"0",""
+"0","data$Occupation <- as.factor(data$Occupation)"
+"0",""
+"0","data$BMI.Category <- as.factor(data$BMI.Category)"

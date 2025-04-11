@@ -1,0 +1,13 @@
+"0","model_performance <- test_data %>%
+ mutate(predictions = predictions) %>%
+ metrics(truth = medv, estimate = predictions)
+"
+"1","[1m[33mError[39m in `metric_set()`:[22m
+[33m![39m Failed to compute `rmse()`.
+[1mCaused by error:[22m
+[33m![39m Can't subset columns that don't exist.
+[31m✖[39m Column `medv` doesn't exist.
+Backtrace:
+[90m  1. [39mtest_data %>% mutate(predictions = predictions) %>% ...
+[90m 11. [39m[1m[94myardstick:::rmse.data.frame([39m[22m...[1m[94m)[39m[22m
+"

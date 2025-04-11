@@ -1,0 +1,284 @@
+---
+title: "Plot"
+output:
+  word_document: default
+  html_notebook: default
+---
+
+## Đọc dữ liệu
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse) 
+library(dplyr)
+library(ggplot2)
+library(GGally)
+library(caret)
+library(skimr)
+
+library(scales)
+library(hrbrthemes)
+library(viridis)
+```
+
+```{r warning=FALSE}
+data <- read.csv("Sleep_health_and_lifestyle_dataset.csv")
+
+data <- data[, c(2:13)]
+```
+
+## Tiền xử lý dữ liệu
+
+-   Blood Pressure
+
+```{r warning=FALSE}
+data$Blood.Pressure <- sub("/", " ", data$Blood.Pressure)  
+data <- separate(data, Blood.Pressure, into = c("Systolic", "Diastolic"), sep = " ")  
+data$Systolic <- as.numeric(data$Systolic) 
+data$Diastolic <- as.numeric(data$Diastolic)
+```
+
+-   BMI Caterogy
+
+```{r warning=FALSE}
+data$BMI.Category<- gsub("Normal Weight", "Normal", data$BMI.Category)   
+data$BMI.Category<- gsub("Obese", "Obesity", data$BMI.Category)  
+```
+
+-   Outcome
+
+```{r warning=FALSE}
+data$Sleep.Disorder[data$Sleep.Disorder == "Sleep Apnea"] = "Sleep.Apnea"  
+data <- data %>% transform(Sleep.Disorder = as.factor(Sleep.Disorder)) 
+```
+
+-   factor
+
+```{r warning=FALSE}
+data$Gender <- as.factor(data$Gender)   
+data$Occupation <- as.factor(data$Occupation)   
+data$BMI.Category <- as.factor(data$BMI.Category)
+```
+
+## Trực quan hóa dữ liệu
+
+### Gender
+
+```{r}
+data %>% count(Gender) %>% mutate(labels = round(100 * n/ sum(n), 1)) %>%
+  ggplot(aes(x = "", y = labels, fill = Gender, group = Gender))+
+  geom_bar(stat = "identity")+
+  coord_polar(theta = "y", start=0) +
+  geom_text(aes(label = labels), position = position_stack(vjust = 0.5), color = "white") +
+  theme_void()
+```
+
+```{r}
+data %>% count(Gender, Sleep.Disorder) %>% group_by(Gender) %>%
+  ggplot(aes(x = Gender, y = n, fill = Sleep.Disorder)) +
+  geom_bar(stat = "identity", position = 'dodge', alpha = 0.75) +
+  ggtitle("Gender") +
+  geom_text(aes(label = n), position = position_dodge(0.9), color = "white", vjust = 1, hjust = 1) +
+  labs(y = 'count') +
+  theme_minimal()
+```
+
+```{r}
+data %>% select(Gender, Sleep.Disorder) %>% 
+  count(Gender, Sleep.Disorder)  %>%  arrange(Gender) %>%
+  mutate(values = round(100*n/sum(n), 2)) %>% mutate(labels = paste(Gender, '_', Sleep.Disorder)) %>%
+  ggplot(aes(x = "", y = values, fill = labels, group = labels)) +
+    geom_col(width=1, color="white") +
+    coord_polar(theta = "y", start=0) +
+    ggtitle("Gender") +
+    theme_void() +
+    geom_text(aes(label = paste0(values, "%")), position = position_stack(vjust = 0.5), color = "white") +
+  theme(
+      panel.spacing = unit(0.1, "lines"),
+      axis.ticks.x=element_blank()
+    )
+```
+
+### Age
+
+```{r}
+data %>% ggplot(aes(x = Age)) +
+  geom_histogram(binwidth = 2, color = "lightblue", fill = "blue", alpha = 0.75) +
+  # geom_density(aes(y= 2 * after_stat(count)),color = "blue", alpha = 0.15) +
+  ggtitle("Age") +
+  ylab("count")+
+  theme_minimal()
+
+```
+
+```{r}
+data %>% ggplot(aes(x = Age, fill = Sleep.Disorder, color = Sleep.Disorder,)) +
+  geom_density(aes(y= after_stat(count)), alpha = 0.15) +
+  ggtitle("Age") +
+  theme_minimal()
+```
+
+### **Occupation**
+
+```{r}
+data %>% count(Occupation) %>% arrange(n) %>% mutate(name = fct_reorder(Occupation, desc(n))) %>%
+  ggplot(aes(x = name, y = n)) +
+  geom_bar(stat = "identity",fill="#1FBF92", alpha=0.5) +
+  coord_flip() +
+  ggtitle("Occupation") +
+  geom_text(aes(label = n), nudge_y = -0.5, color = "#169CCC") +
+  theme_bw()
+```
+
+### **Sleep Duration**
+
+```{r}
+ggplot(data = data, aes(x = Sleep.Duration)) +
+  geom_histogram(color = "#6DA7F2", fill = "#6DA7F2", alpha = 0.5, binwidth = 0.2) +
+  ggtitle("Sleep Duration") +
+  theme_minimal()
+```
+
+```{r}
+data %>% ggplot(aes(x = Sleep.Duration, fill = Sleep.Disorder, color = Sleep.Disorder)) +
+  geom_density(aes(y= after_stat(count)), alpha = 0.1) +
+  ggtitle("Sleep duration distribution") +
+  theme_minimal()
+```
+
+### **Quality of sleep**
+
+```{r}
+data %>% ggplot(aes(x = Quality.of.Sleep)) +
+  geom_density(aes(y= after_stat(count)), color = "#6DA7F2", fill = "#6DA7F2", alpha = 0.5) +
+  ggtitle("Quality of sleep") +
+  theme_minimal()
+
+```
+
+```{r}
+data %>% ggplot(aes(x = Quality.of.Sleep, color = Sleep.Disorder, fill = Sleep.Disorder)) +
+  geom_density(aes(y= after_stat(count)), alpha = 0.1) +
+  ggtitle("Quality of sleep distribution") +
+  theme_minimal()
+```
+
+### Physical Activity level Distribution
+
+```{r warning=FALSE}
+data %>% ggplot(aes(x = Physical.Activity.Level)) +
+  geom_density(aes(y = after_stat(count)),color = "#6DA7F2", fill = "#6DA7F2", alpha = 0.5, binwidth = 5) +
+  ggtitle("Physical Activity Level distribution") +
+  theme_minimal()
+```
+
+```{r}
+data %>% ggplot(aes(x = Physical.Activity.Level, color = Sleep.Disorder, fill = Sleep.Disorder)) +
+  geom_density(aes(y= after_stat(count)), alpha = 0.1) +
+  ggtitle("Physical Activity Level distribution") +
+  theme_minimal()
+
+```
+
+### Stress level
+
+```{r}
+
+data %>% ggplot(aes(x = Stress.Level)) +
+  geom_histogram(fill = "#6DA7F2", color="#6DA7F2", alpha = 0.5, binwidth = 1) +
+  ggtitle("Stress Level") +
+  theme_minimal()
+```
+
+```{r}
+
+data %>% ggplot(aes(x = Stress.Level, color = Sleep.Disorder, fill = Sleep.Disorder)) +
+  geom_density(aes(y= after_stat(count)), alpha = 0.1) +
+  ggtitle("Stress Level distribution") +
+  theme_minimal()
+```
+
+### BMI
+
+```{r}
+data %>% count(BMI.Category, Sleep.Disorder) %>% group_by(BMI.Category) %>%
+  ggplot(aes(x = BMI.Category, y = n, fill = Sleep.Disorder)) +
+  geom_bar(stat = "identity", position = 'dodge', alpha = 0.75) +
+  ggtitle("BMI") +
+  geom_text(aes(label = n), position = position_dodge(0.9), color = "white", vjust = 1, hjust = 1) +
+  labs(y = 'count') +
+  theme_minimal()
+```
+
+### Systolic
+
+```{r}
+ggplot(data, aes(x=data$Systolic))  + 
+  geom_density(aes(y = after_stat(count)),color="lightblue", fill = "blue", alpha = 0.5)+
+  labs(x = "Systolic", y = "Count") +
+  theme_minimal()
+
+```
+
+```{r}
+data %>% ggplot(aes(x = Systolic, color = Sleep.Disorder, fill = Sleep.Disorder)) +
+  geom_density(aes(y= after_stat(count)), alpha = 0.1) +
+  ggtitle("Systolic distribution") +
+  theme_minimal()
+```
+
+### Diatolic
+
+```{r}
+ggplot(data, aes(x=data$Diastolic))  + 
+  geom_density(aes(y = after_stat(count)),color="lightblue", fill = "blue", alpha = 0.5)+
+  labs(x = "Diastolic", y = "Count") +
+  theme_minimal()
+
+```
+
+```{r}
+data %>% ggplot(aes(x = Diastolic, color = Sleep.Disorder, fill = Sleep.Disorder)) +
+  geom_density(aes(y= after_stat(count)), alpha = 0.1) +
+  ggtitle("Diastolic distribution") +
+  theme_minimal()
+```
+
+### Heart rate
+
+```{r}
+data %>% ggplot(aes(x = Heart.Rate, color = Sleep.Disorder, fill = Sleep.Disorder)) +
+  geom_density(aes(y= after_stat(count)), alpha = 0.1) +
+  ggtitle("Heart Rate distribution") +
+  theme_minimal()
+```
+
+### Daily Steps
+
+```{r}
+ggplot(data, aes(x=data$Daily.Steps))  + 
+  geom_density(aes(y = after_stat(count)),color="lightblue", fill = "blue", alpha = 0.5)+
+  labs(x = "Daily Steps", y = "Count") +
+  theme_minimal()
+```
+
+```{r}
+data %>% ggplot(aes(x = Daily.Steps, color = Sleep.Disorder, fill = Sleep.Disorder)) +
+  geom_density(aes(y= after_stat(count)), alpha = 0.1) +
+  ggtitle("Daily Steps distribution") +
+  theme_minimal()
+```
+
+### Sleep Disorder
+
+```{r}
+data %>% select(Sleep.Disorder) %>% 
+  count(Sleep.Disorder) %>% arrange(n) %>% 
+  mutate(labels = scales::percent(n/sum(n))) %>%
+  ggplot(aes(x = "", y = labels, fill = Sleep.Disorder)) +
+    geom_bar(stat="identity", width=1, color="white") +
+    coord_polar("y", start=0) +
+    ggtitle("Sleep Disorder") +
+    theme_void() +
+    geom_text(aes(label = labels), position = position_stack(vjust = 0.5), color = "white") 
+    
+```

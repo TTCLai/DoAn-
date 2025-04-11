@@ -1,0 +1,5 @@
+"0","data$BMI.Category<- gsub(""Normal Weight"", ""Normal"", data$BMI.Category)"
+"0",""
+"0","data$BMI.Category<- gsub(""Obese"", ""Obesity"", data$BMI.Category)"
+"0",""
+"0",""

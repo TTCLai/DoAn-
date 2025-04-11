@@ -1,0 +1,33 @@
+{
+    "id": "C157F597",
+    "path": "H:/My Drive/R project/SleepHealthandLifestyle/predictAllDataset.Rmd",
+    "project_path": "predictAllDataset.Rmd",
+    "type": "r_markdown",
+    "hash": "1554211286",
+    "contents": "",
+    "dirty": false,
+    "created": 1696401353844.0,
+    "source_on_save": false,
+    "relative_order": 6,
+    "properties": {
+        "tempName": "Untitled1",
+        "chunk_output_type": "inline",
+        "source_window_id": "",
+        "Source": "Source",
+        "cursorPosition": "0,0",
+        "scrollLine": "0",
+        "rmdVisualMode": "true",
+        "rmdVisualWrapConfigured": "true",
+        "docOutlineVisible": "1",
+        "rmdVisualCollapsedChunks": "",
+        "rmdVisualModeLocation": "156:0"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1696401372,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1696401372404,
+    "read_only": false,
+    "read_only_alternatives": []
+}

@@ -1,0 +1,4 @@
+"0","data %>% ggplot(aes(x = Daily.Steps, color = Sleep.Disorder, fill = Sleep.Disorder)) +"
+"0","  geom_density(aes(y= after_stat(count)), alpha = 0.1) +"
+"0","  ggtitle(""Daily Steps distribution"") +"
+"0","  theme_minimal()"

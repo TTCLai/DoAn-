@@ -1,0 +1,1 @@
+"0","pre <- predict(rf_all_model, newdata = model_data, type = ""class"")"

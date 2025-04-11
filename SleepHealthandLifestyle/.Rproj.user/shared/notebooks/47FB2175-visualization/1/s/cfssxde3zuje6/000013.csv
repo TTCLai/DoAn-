@@ -1,0 +1,2 @@
+"0","ggcorr(data, label = TRUE)"
+"2","Warning: data in column(s) 'Gender', 'Occupation', 'BMI.Category', 'Sleep.Disorder' are not numeric and were ignored"

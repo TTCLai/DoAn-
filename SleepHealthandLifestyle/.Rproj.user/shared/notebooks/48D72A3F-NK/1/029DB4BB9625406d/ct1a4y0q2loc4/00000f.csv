@@ -1,0 +1,5 @@
+"0","tune_pre <- predict(tune_fit, test_data, type = ""raw"")"
+"0","plot(test_data$Sleep.Disorder, tune_pre,"
+"0","     main = ""Predicted vs. Actual"","
+"0","     xlab = ""Actual"", "
+"0","     ylab = ""Predicted"")"

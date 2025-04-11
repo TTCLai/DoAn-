@@ -1,0 +1,35 @@
+---
+title: "Predict on dataset"
+output:
+  html_document:
+    df_print: paged
+  html_notebook: default
+  word_document: default
+  pdf_document: default
+---
+
+```{r}
+library(tidyverse) 
+library(dplyr)
+library(ggplot2)
+library(GGally)
+library(caret)
+library(skimr)
+library(rpart)
+library(rpart.plot)
+```
+
+```{r}
+
+model_data = readRDS("ModelData.rda")
+# load(file = "RFModel.rda")
+rf_all_model = readRDS("RFModel.rds") 
+```
+
+```{r}
+pre <- predict(rf_all_model, newdata = model_data, type = "class")
+```
+
+```{r}
+confusionMatrix(pre, model_data[, "Sleep.Disorder"])
+```

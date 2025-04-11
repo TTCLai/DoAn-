@@ -1,0 +1,3 @@
+"0","data <- read.csv(""Sleep_health_and_lifestyle_dataset.csv"")"
+"0",""
+"0","data <- data[, c(2:13)] "

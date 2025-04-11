@@ -1,0 +1,8 @@
+"0","preprocessed.data <- read.csv(""Sleep_health_and_lifestyle_dataset.csv"")"
+"0","data <- preprocessed.data[, c(2:13)] "
+"2","Error in exists(cacheKey, where = .rs.WorkingDataEnv, inherits = FALSE) : 
+  invalid first argument
+"
+"2","Error in assign(cacheKey, frame, .rs.CachedDataEnv) : 
+  attempt to use zero-length variable name
+"

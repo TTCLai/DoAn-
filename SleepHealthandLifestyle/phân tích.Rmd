@@ -1,0 +1,177 @@
+---
+title: "Phân tích"
+output:
+  word_document: default
+  html_notebook: default
+---
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse) 
+library(dplyr)
+library(ggplot2)
+library(GGally)
+library(caret)
+library(skimr)
+
+library(scales)
+library(hrbrthemes)
+library(viridis)
+```
+
+```{r}
+## Load dữ liệu 
+preprocessed_data <- read.csv("Sleep_health_and_lifestyle_dataset.csv")
+
+##  Loại bỏ các cột không sử dụng khi training
+data <- preprocessed_data[, c(2:13)] 
+
+## Transform dứ liệu
+data$Blood.Pressure <- sub("/", " ", data$Blood.Pressure)
+data <- separate(data, Blood.Pressure, into = c("Systolic", "Diastolic"), sep = " ")
+data$Systolic <- as.numeric(data$Systolic)
+data$Diastolic <- as.numeric(data$Diastolic)
+
+data$BMI.Category<- gsub("Normal Weight", "Normal", data$BMI.Category)
+
+data$BMI.Category<- gsub("Obese", "Obesity", data$BMI.Category)
+
+data$Sleep.Disorder[data$Sleep.Disorder == "Sleep Apnea"] = "Sleep.Apnea"
+data <- data %>% transform(Sleep.Disorder = as.factor(Sleep.Disorder))
+
+data$Occupation <- as.factor(data$Occupation)
+
+data$Gender <- as.factor(data$Gender)
+
+data$BMI.Category <- as.factor(data$BMI.Category)
+```
+
+### The relationship between gender and age affect insomnia and sleep apnea?
+
+```{r}
+ggplot(data, aes(x = Gender, y = Age, fill = Sleep.Disorder)) +
+  geom_boxplot() +
+  labs(title = "Relationship Between Gender and Age",
+       x = "Gender",
+       y = "Age",
+       fill = "Sleep Disorder") +
+  scale_fill_manual(values = c("None" = "blue", "Sleep.Apnea" = "red", "Insomnia" = "green")) +
+  theme_minimal()
+
+```
+
+```{r}
+t_test_insomnia <- t.test(Age ~ Gender, data = subset(data, Sleep.Disorder == "Insomnia"))
+t_test_sleep_apnea <- t.test(Age ~ Gender, data = subset(data, Sleep.Disorder == "Sleep.Apnea"))
+# In kết quả kiểm định t-test
+print(t_test_insomnia)
+print(t_test_sleep_apnea)
+print(t_test_sleep_apnea)
+
+```
+
+### Mối quan hệ giữa nghề nghiệp và thời lượng giấc ngủ ảnh hưởng đến chất lượng giấc ngủ như thế nào?
+
+```{r}
+# Tạo một data frame mới với các biến cần thiết
+data_analysis <- data %>%
+  select(Occupation, Sleep.Duration, Quality.of.Sleep)
+# Thực hiện phân tích ANOVA
+anova_result <- aov(Quality.of.Sleep ~ Occupation * Sleep.Duration, data = data_analysis)
+# Hiển thị kết quả phân tích ANOVA
+summary(anova_result)
+
+```
+
+### Mối quan hệ Stress levels và Heart Rate
+
+```{r}
+plot1 <- data %>% ggplot(aes(x = Stress.Level, color = Sleep.Disorder, fill = Sleep.Disorder)) +
+  geom_density(aes(y= after_stat(count)), alpha = 0.1) +
+  ggtitle("Stress Level distribution") +
+  theme_minimal()
+
+plot2<- data %>% ggplot(aes(x = Heart.Rate, color = Sleep.Disorder, fill = Sleep.Disorder)) +
+  geom_density(aes(y= after_stat(count)), alpha = 0.1) +
+  ggtitle("Heart Rate distribution") +
+  theme_minimal()
+
+plot3 <- data %>% ggplot(aes(y = Heart.Rate, x = Stress.Level, color = Sleep.Disorder)) +
+  geom_point() +
+  geom_smooth(method=lm , aes(fill= Sleep.Disorder), se=TRUE) +
+  theme_minimal()
+library(ggpubr)
+ggarrange(ggarrange(plot1, plot2, ncol = 2, nrow = 1, common.legend = TRUE,
+legend = "bottom"), plot3, ncol = 1, nrow = 2 )
+```
+
+### Mối quan hệ giữa physical activity,daily steps ảnh hưởng đến Quality of Sleep và Sleep Disorder
+
+```{r}
+Physic_plot <-data %>% ggplot(aes(x = Physical.Activity.Level, color = Sleep.Disorder, fill = Sleep.Disorder)) +
+  geom_density(aes(y= after_stat(count)), alpha = 0.1) +
+  ggtitle("(a)") +
+  theme_minimal()
+
+DStep_plot <- data %>% ggplot(aes(x = Daily.Steps, color = Sleep.Disorder, fill = Sleep.Disorder)) +
+  geom_density(aes(y= after_stat(count)), alpha = 0.1) +
+  ggtitle("(b)") +
+  theme_minimal()
+
+QSleep_plot <- data %>% ggplot(aes(x = Quality.of.Sleep, color = Sleep.Disorder, fill = Sleep.Disorder)) +
+  geom_density(aes(y= after_stat(count)), alpha = 0.1) +
+  ggtitle("(c)") +
+  theme_minimal()
+
+
+Physic_DStep_plot <- data %>% ggplot(aes(x = Physical.Activity.Level, y = Daily.Steps, color = Sleep.Disorder)) +
+  geom_point() +
+  ggtitle("(d)") +
+  theme_minimal()
+
+Physic_QSleep_plot <-data %>% ggplot(aes(x = Quality.of.Sleep, y = Physical.Activity.Level, color = Sleep.Disorder)) +
+  geom_point() +
+  geom_smooth(method=lm , aes(fill= Sleep.Disorder), se=TRUE) +
+  ggtitle("(e)") +
+  theme_minimal()
+
+DStep_QSleep_plot <- data %>% ggplot(aes(x = Quality.of.Sleep, y = Daily.Steps, color = Sleep.Disorder)) +
+  geom_point() +
+  ggtitle("(f)")+
+  geom_smooth(method=lm , aes(fill= Sleep.Disorder), se=TRUE) +
+  theme_minimal()
+
+```
+
+```{r}
+library(ggpubr)
+ggarrange(
+  Physic_plot, DStep_plot, QSleep_plot, Physic_DStep_plot, Physic_QSleep_plot, DStep_QSleep_plot,
+  ncol = 2, nrow = 3,
+  common.legend = TRUE, legend = "bottom"
+)
+```
+
+### Mối quan hệ giữa BMI categories và sleep quality
+
+```{r}
+ggplot(data, aes(x = BMI.Category, y = Quality.of.Sleep, fill=Sleep.Disorder)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  scale_fill_manual(values = c("None" = "lightpink", "Sleep.Apnea" = "darkslateblue","Insomnia"="blue")) +
+  labs(x = "BMI Category", y = "Quality of Sleep")
+```
+
+### Mối quan hệ blood pressure và heart rate ảnh hưởng đến insomnia và sleep apnea
+
+```{r}
+ggplot(data, aes(x =data$Heart.Rate, y =data$Systolic , color= data$Sleep.Disorder))  + 
+  geom_point() +
+  labs(x = "Heart Rate", y = "Systolic") + 
+  geom_smooth(method = 'loess',formula = 'y ~ x',mapping = aes(x =data$Heart.Rate, y =data$Systolic , color= data$Sleep.Disorder))
+```
+
+```{r}
+ggplot(data, aes(x =data$Heart.Rate, y =data$Diastolic , color= data$Sleep.Disorder))  + 
+  geom_point() + 
+  labs(x = "Heart Rate", y = "Diastolic") +
+  geom_smooth(method = 'loess',formula = 'y ~ x',mapping = aes(x =data$Heart.Rate, y =data$Diastolic , color= data$Sleep.Disorder))
+```

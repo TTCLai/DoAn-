@@ -1,0 +1,7 @@
+"0","(rf_acc <- as.numeric(rf_conf$overall[1]))"
+"1","[1]"
+"1"," 0.9032258"
+"1","
+"
+"0","# rm(rf_pred)"
+"0","# rm(rf_conf)"

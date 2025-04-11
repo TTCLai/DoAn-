@@ -1,0 +1,6 @@
+"0","re_fit <- prune(decision_tree, "
+"0","                cp = decision_tree$cptable[which.min(decision_tree$cptable[, ""xerror""]), ""CP""])"
+"0",""
+"0","# rm(fit)"
+"0","rpart.plot(re_fit, yesno = TRUE)"
+"0",""

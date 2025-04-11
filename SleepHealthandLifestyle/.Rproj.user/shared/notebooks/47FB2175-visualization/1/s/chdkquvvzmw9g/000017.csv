@@ -1,0 +1,6 @@
+"0","data %>% count(Gender) %>% mutate(labels = round(100 * n/ sum(n), 1)) %>%"
+"0","  ggplot(aes(x = """", y = labels, fill = Gender, group = Gender))+"
+"0","  geom_bar(stat = ""identity"")+"
+"0","  coord_polar(theta = ""y"", start=0) +"
+"0","  geom_text(aes(label = labels), position = position_stack(vjust = 0.5), color = ""white"") +"
+"0","  theme_void()"

@@ -1,0 +1,6 @@
+"0","data %>% ggplot(aes(x = Physical.Activity.Level)) +
+  geom_density(aes(y = after_stat(count)),color = ""#6DA7F2"", fill = ""#6DA7F2"", alpha = 0.5, binwidth = 5) +
+  ggtitle(""Physical Activity Level distribution"") +
+  theme_minimal()
+"
+"2","Warning: [38;5;232mIgnoring unknown parameters: `binwidth`[39m"

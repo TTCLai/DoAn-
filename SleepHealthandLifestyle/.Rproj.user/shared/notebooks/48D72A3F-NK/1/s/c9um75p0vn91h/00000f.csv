@@ -1,0 +1,6 @@
+"0",""
+"0","model_data <- data[, -3] "
+"0","saveRDS(model_data, ""ModelData.rda"", row.names = FALSE)"
+"2","Error in saveRDS(model_data, ""ModelData.rda"", row.names = FALSE) : 
+  unused argument (row.names = FALSE)
+"

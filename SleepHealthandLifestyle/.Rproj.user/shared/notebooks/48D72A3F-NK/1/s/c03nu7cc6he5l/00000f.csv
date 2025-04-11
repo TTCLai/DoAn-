@@ -1,0 +1,15 @@
+"0","data$Sleep.Disorder[data$Sleep.Disorder == ""Sleep Apnea""] = ""Sleep.Apnea"""
+"2","Error in exists(cacheKey, where = .rs.WorkingDataEnv, inherits = FALSE) : 
+  invalid first argument
+"
+"2","Error in assign(cacheKey, frame, .rs.CachedDataEnv) : 
+  attempt to use zero-length variable name
+"
+"0","data <- data %>% transform(Sleep.Disorder = as.factor(Sleep.Disorder))"
+"0",""
+"2","Error in exists(cacheKey, where = .rs.WorkingDataEnv, inherits = FALSE) : 
+  invalid first argument
+"
+"2","Error in assign(cacheKey, frame, .rs.CachedDataEnv) : 
+  attempt to use zero-length variable name
+"

@@ -1,0 +1,8 @@
+"0","library(ggpubr)"
+"0","ggarrange("
+"0","  Physic_plot, DStep_plot, QSleep_plot, Physic_DStep_plot, Physic_QSleep_plot, DStep_QSleep_plot,"
+"0","  ncol = 2, nrow = 3,"
+"0","  common.legend = TRUE, legend = ""bottom"""
+"0",")"
+"2","[38;5;232m`geom_smooth()` using formula = 'y ~ x'[39m"
+"2","[38;5;232m`geom_smooth()` using formula = 'y ~ x'[39m"

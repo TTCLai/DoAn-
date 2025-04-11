@@ -1,0 +1,7 @@
+"0","data %>% count(Gender, Sleep.Disorder) %>% group_by(Gender) %>%"
+"0","  ggplot(aes(x = Gender, y = n, fill = Sleep.Disorder)) +"
+"0","  geom_bar(stat = ""identity"", position = 'dodge', alpha = 0.75) +"
+"0","  ggtitle(""Gender"") +"
+"0","  geom_text(aes(label = n), position = position_dodge(0.9), color = ""white"", vjust = 1, hjust = 1) +"
+"0","  labs(y = 'count') +"
+"0","  theme_minimal()"

@@ -1,0 +1,4 @@
+"0","data$Blood.Pressure <- sub(""/"", "" "", data$Blood.Pressure)"
+"0","data <- separate(data, Blood.Pressure, into = c(""Systolic"", ""Diastolic""), sep = "" "")"
+"0","data$Systolic <- as.numeric(data$Systolic)"
+"0","data$Diastolic <- as.numeric(data$Diastolic)"

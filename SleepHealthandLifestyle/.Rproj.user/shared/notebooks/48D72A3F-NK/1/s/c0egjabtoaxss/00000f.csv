@@ -1,0 +1,15 @@
+"0","tune_fit <- train(
+  Sleep.Disorder ~ .,
+  data = train_data,
+  method = ""rpart"",
+  tuneLength = 100,
+  metric = 'ROC',
+  trControl = trainControl(
+    method = 'cv',
+    number = 10,
+    savePredictions = 'final',
+    classProbs =  TRUE
+  )
+)
+"
+"2","Warning: The metric ""ROC"" was not in the result set. Accuracy will be used instead."

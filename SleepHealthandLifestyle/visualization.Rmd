@@ -1,0 +1,503 @@
+---
+title: "R Notebook"
+output:
+  word_document: default
+  html_notebook: default
+---
+
+## Đọc dữ liệu
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse) 
+library(dplyr)
+library(ggplot2)
+library(GGally)
+library(caret)
+library(skimr)
+
+library(scales)
+library(hrbrthemes)
+library(viridis)
+```
+
+```{r warning=FALSE}
+data <- read.csv("Sleep_health_and_lifestyle_dataset.csv")
+
+data <- data[, c(2:13)] 
+```
+
+## Tiền xử lý dữ liệu
+
+-   Blood Pressure
+
+```{r warning=FALSE}
+data$Blood.Pressure <- sub("/", " ", data$Blood.Pressure) 
+data <- separate(data, Blood.Pressure, into = c("Systolic", "Diastolic"), sep = " ") 
+data$Systolic <- as.numeric(data$Systolic)
+data$Diastolic <- as.numeric(data$Diastolic)
+```
+
+-   BMI Caterogy
+
+```{r warning=FALSE}
+data$BMI.Category<- gsub("Normal Weight", "Normal", data$BMI.Category)  
+data$BMI.Category<- gsub("Obese", "Obesity", data$BMI.Category)  
+```
+
+-   Outcome
+
+```{r warning=FALSE}
+# data$Sleep.Disorder[data$Sleep.Disorder == "None"] <- 0
+# data$Sleep.Disorder[data$Sleep.Disorder == "Sleep Apnea"] <- 2 
+# data$Sleep.Disorder[data$Sleep.Disorder == "Insomnia"] <- 1 
+#  # data$Sleep.Disorder <- as.numeric(data$Sleep.Disorder) 
+data$Sleep.Disorder[data$Sleep.Disorder == "Sleep Apnea"] = "Sleep.Apnea" 
+data <- data %>% transform(Sleep.Disorder = as.factor(Sleep.Disorder)) 
+```
+
+-   factor
+
+```{r warning=FALSE}
+data$Gender <- as.factor(data$Gender)  
+data$Occupation <- as.factor(data$Occupation)  
+data$BMI.Category <- as.factor(data$BMI.Category)
+```
+
+## Trực quan hóa dữ liệu
+
+### Gender
+
+```{r}
+data %>% count(Gender) %>% mutate(labels = round(100 * n/ sum(n), 1)) %>%
+  ggplot(aes(x = "", y = labels, fill = Gender, group = Gender))+
+  geom_bar(stat = "identity")+
+  coord_polar(theta = "y", start=0) +
+  geom_text(aes(label = labels), position = position_stack(vjust = 0.5), color = "white") +
+  theme_void()
+```
+
+-   Nhận xét: Tỉ lệ nam và nữ trong tập dữ liệu gần bằng nhau
+
+```{r}
+data %>% count(Gender, Sleep.Disorder) %>% group_by(Gender) %>%
+  ggplot(aes(x = Gender, y = n, fill = Sleep.Disorder)) +
+  geom_bar(stat = "identity", position = 'dodge', alpha = 0.75) +
+  ggtitle("Gender") +
+  geom_text(aes(label = n), position = position_dodge(0.9), color = "white", vjust = 1, hjust = 1) +
+  labs(y = 'count') +
+  theme_minimal()
+
+
+```
+
+-   Nhận xét:
+
+    -   Số lượng nữ giới mắc chứng Sleep Apnea lớn hơn nam giới
+
+    -   Số lượng nam giới mắc chứng Insomia lơn hơn nữ giới
+
+```{r}
+data %>% select(Gender, Sleep.Disorder) %>% 
+  count(Gender, Sleep.Disorder)  %>% 
+  group_by(Gender) %>% arrange(Gender) %>%
+  mutate(labels = round(100*n/sum(n), 2)) %>%
+  ggplot(aes(x = "", y = labels, fill = Sleep.Disorder, group = Sleep.Disorder)) +
+    geom_col(width=1, color="white") +
+    coord_polar(theta = "y", start=0) +
+    ggtitle("Gender") +
+    theme_void() +
+    geom_text(aes(label = paste0(labels, "%")), position = position_stack(vjust = 0.5), color = "white") +
+  facet_wrap(.~Gender) +
+  theme(
+      panel.spacing = unit(0.1, "lines"),
+      axis.ticks.x=element_blank()
+    )
+```
+
+-   
+
+    ```{r}
+    data %>% select(Gender, Sleep.Disorder) %>% 
+      count(Gender, Sleep.Disorder)  %>%  arrange(Gender) %>%
+      mutate(values = round(100*n/sum(n), 2)) %>% mutate(labels = paste(Gender, '_', Sleep.Disorder)) %>%
+      ggplot(aes(x = "", y = values, fill = labels, group = labels)) +
+        geom_col(width=1, color="white") +
+        coord_polar(theta = "y", start=0) +
+        ggtitle("Gender") +
+        theme_void() +
+        geom_text(aes(label = paste0(values, "%")), position = position_stack(vjust = 0.5), color = "white") +
+      theme(
+          panel.spacing = unit(0.1, "lines"),
+          axis.ticks.x=element_blank()
+        )
+    ```
+
+-   **Dữ liệu không cân bằng: =\> cân bằng dữ liệu**
+
+```{r}
+data %>% select(Gender, Sleep.Disorder) %>% 
+  count(Gender, Sleep.Disorder)  %>% group_by(Sleep.Disorder) %>%
+  mutate(labels = round(100*n / sum(n), 2)) %>%
+  ggplot(aes(x = "", y = labels, fill = Gender, group = Gender)) +
+    geom_bar(stat="identity", width=1, color="white") +
+    coord_polar("y", start=0) +
+    ggtitle("Gender") +
+    theme_void() +
+    geom_text(aes(label = paste0(labels, "%")), position = position_stack(vjust = 0.5), color = "white") +
+  facet_wrap(~Sleep.Disorder) +
+  theme(
+      panel.spacing = unit(0.1, "lines"),
+      axis.ticks.x=element_blank()
+    ) 
+```
+
+### Age
+
+```{r eval=FALSE, include=FALSE}
+data %>% ggplot( aes(x = Age)) +
+  geom_histogram(colour = "black", fill = "#6DA7F2", alpha = 0.75, binwidth = 1) +
+  geom_density(aes(y= after_stat(count))) +
+  ggtitle("Age distribution") + 
+  theme_minimal()
+
+```
+
+```{r eval=FALSE, include=FALSE}
+data %>% ggplot( aes(x = Age)) +
+  geom_histogram(colour = "black", fill = "#6DA7F2", alpha = 0.75, binwidth = 1) +
+  geom_density(aes(y= after_stat(count))) +
+  ggtitle("Age distribution") + 
+  theme_minimal()
+
+```
+
+```{r}
+data %>% ggplot(aes(x = Age)) +
+  geom_histogram(binwidth = 2, color = "lightblue", fill = "blue", alpha = 0.75) +
+  # geom_density(aes(y= 2 * after_stat(count)),color = "blue", alpha = 0.15) +
+  ggtitle("Age") +
+  ylab("count")+
+  theme_minimal()
+data %>% ggplot(aes(x = Age, fill = Sleep.Disorder, color = Sleep.Disorder,)) +
+  geom_density(aes(y= after_stat(count)), alpha = 0.15) +
+  ggtitle("Age") +
+  theme_minimal()
+
+```
+
+-   Nhận xét:
+
+    -   Những người có độ tuổi trong khoảng 40 - 45 có xu hướng mắc chứng Insomia
+
+    -   Độ tuổi từ 40 trở xuống có xu hướng không mắc bệnh nào
+
+### Occupation
+
+```{r}
+data %>% count(Occupation) %>% arrange(n) %>% mutate(name = fct_reorder(Occupation, desc(n))) %>%
+  ggplot(aes(x = name, y = n)) +
+  geom_bar(stat = "identity",fill="#1FBF92", alpha=0.5) +
+  coord_flip() +
+  ggtitle("Occupation") +
+  geom_text(aes(label = n), nudge_y = -0.5, color = "#169CCC") +
+  theme_bw()
+```
+
+-   Nhận xét:
+
+    -   Dữ liệu mất cân bằng
+
+```{r}
+
+data %>% count(Occupation, Sleep.Disorder) %>% group_by(Occupation) %>%
+  ggplot(aes(x = Occupation, y = n, fill = Sleep.Disorder)) +
+  geom_bar(stat = "identity", position = 'dodge', alpha = 0.75) +
+  ggtitle("Occupation") +
+  geom_text(aes(label = n), position = position_dodge(0.9), color = "white", vjust = 1, hjust = 1) +
+  labs(y = 'count') +
+  theme_minimal()
+```
+
+**Nhận xét: Bo**
+
+### Sleep Duration
+
+```{r warning=FALSE}
+ggplot(data = data, aes(x = Sleep.Duration)) +
+  geom_histogram(color = "#6DA7F2", fill = "#6DA7F2", alpha = 0.5, binwidth = 0.2) +
+  # geom_density(aes(y= 0.1 * after_stat(count))) + #6DA7F
+  ggtitle("Sleep Duration") +
+  theme_minimal()
+
+data %>% ggplot(aes(y= Sleep.Duration, x = Sleep.Disorder, fill = Sleep.Disorder)) +
+  geom_violin() +
+  scale_fill_viridis(discrete = TRUE, alpha = 0.6) +
+  theme_minimal() +
+  ggtitle("Sleep Duration") + 
+  xlab("")
+
+
+data %>% ggplot(aes(x = Sleep.Duration, fill = Sleep.Disorder, color = Sleep.Disorder)) +
+  geom_density(aes(y= after_stat(count)), alpha = 0.1) +
+  ggtitle("Sleep duration distribution") +
+  theme_minimal()
+```
+
+-   Nhận xét:
+
+    -   Những người cps chất lượng giấc ngủ từ 6 - 7 có xu hướng mắc bệnh Insomia nhiều hơn so với các mức khác
+
+### Quality of Sleep
+
+```{r}
+data %>% ggplot(aes(x = Quality.of.Sleep)) +
+  geom_density(aes(y= after_stat(count)), color = "#6DA7F2", fill = "#6DA7F2", alpha = 0.5) +
+  ggtitle("Quality of sleep") +
+  theme_minimal()
+
+data %>% ggplot(aes(y= Quality.of.Sleep, x = Sleep.Disorder, fill = Sleep.Disorder)) +
+  geom_violin() +
+  scale_fill_viridis(discrete = TRUE, alpha = 0.6) +
+  theme_minimal() +
+  ggtitle("Quality of sleep") + xlab("")
+
+
+data %>% ggplot(aes(x = Quality.of.Sleep, color = Sleep.Disorder, fill = Sleep.Disorder)) +
+  geom_density(aes(y= after_stat(count)), alpha = 0.1) +
+  ggtitle("Quality of sleep distribution") +
+  theme_minimal()
+```
+
+### Physical Activity Level
+
+```{r}
+
+data %>% ggplot(aes(x = Physical.Activity.Level)) +
+  geom_histogram(color = "#6DA7F2", fill = "#6DA7F2", alpha = 0.5, binwidth = 5) +
+  ggtitle("Physical Activity Level distribution") +
+  theme_minimal()
+
+data %>% ggplot(aes(x = Physical.Activity.Level)) +
+  geom_density(aes(y = after_stat(count)),color = "#6DA7F2", fill = "#6DA7F2", alpha = 0.5, binwidth = 5) +
+  ggtitle("Physical Activity Level distribution") +
+  theme_minimal()
+
+
+data %>% ggplot(aes(y= Physical.Activity.Level, x = Sleep.Disorder, fill = Sleep.Disorder)) +
+  geom_violin() +
+  scale_fill_viridis(discrete = TRUE, alpha = 0.6) +
+  theme_minimal() +
+  ggtitle("Quality of sleep") + xlab("")
+
+data %>% ggplot(aes(x = Physical.Activity.Level, color = Sleep.Disorder, fill = Sleep.Disorder)) +
+  geom_density(aes(y= after_stat(count)), alpha = 0.1) +
+  ggtitle("Physical Activity Level distribution") +
+  theme_minimal()
+
+```
+
+-   Nhận xét:
+
+    -   
+
+### Stress Level
+
+```{r}
+
+data %>% ggplot(aes(x = Stress.Level)) +
+  geom_histogram(fill = "#6DA7F2", color="#6DA7F2", alpha = 0.5, binwidth = 1) +
+  ggtitle("Stress Level") +
+  theme_minimal()
+
+data %>% ggplot(aes(y= Stress.Level, x = Sleep.Disorder, fill = Sleep.Disorder)) +
+  geom_violin() +
+  scale_fill_viridis(discrete = TRUE, alpha = 0.6) +
+  theme_minimal() +
+  ggtitle("Quality of sleep") + xlab("")
+
+data %>% ggplot(aes(x = Stress.Level, color = Sleep.Disorder, fill = Sleep.Disorder)) +
+  geom_density(aes(y= after_stat(count)), alpha = 0.1) +
+  ggtitle("Stress Level distribution") +
+  theme_minimal()
+```
+
+-   Nhận xét:
+
+### BMI
+
+```{r}
+data %>% count(BMI.Category, Sleep.Disorder) %>% group_by(BMI.Category) %>%
+  ggplot(aes(x = BMI.Category, y = n, fill = Sleep.Disorder)) +
+  geom_bar(stat = "identity", position = 'dodge', alpha = 0.75) +
+  ggtitle("BMI") +
+  geom_text(aes(label = n), position = position_dodge(0.9), color = "white", vjust = 1, hjust = 1) +
+  labs(y = 'count') +
+  theme_minimal()
+```
+
+### Systolic
+
+```{r}
+data %>% ggplot(aes(y= Systolic, x = Sleep.Disorder, fill = Sleep.Disorder)) +
+  geom_violin() +
+  scale_fill_viridis(discrete = TRUE, alpha = 0.6) +
+  theme_minimal() +
+  ggtitle("Systolic") + xlab("")
+
+data %>% ggplot(aes(x = Systolic, color = Sleep.Disorder, fill = Sleep.Disorder)) +
+  geom_density(aes(y= after_stat(count)), alpha = 0.1) +
+  ggtitle("Systolic distribution") +
+  theme_minimal()
+```
+
+### Diastolic
+
+```{r}
+data %>% ggplot(aes(y= Diastolic, x = Sleep.Disorder, fill = Sleep.Disorder)) +
+  geom_violin() +
+  scale_fill_viridis(discrete = TRUE, alpha = 0.6) +
+  theme_minimal() +
+  ggtitle("Diastolic") + xlab("")
+
+data %>% ggplot(aes(x = Diastolic, color = Sleep.Disorder, fill = Sleep.Disorder)) +
+  geom_density(aes(y= after_stat(count)), alpha = 0.1) +
+  ggtitle("Diastolic distribution") +
+  theme_minimal()
+```
+
+### Heart rate
+
+```{r}
+data %>% ggplot(aes(y= Heart.Rate, x = Sleep.Disorder, fill = Sleep.Disorder)) +
+  geom_violin() +
+  scale_fill_viridis(discrete = TRUE, alpha = 0.6) +
+  theme_minimal() +
+  ggtitle("Heart Rate") + xlab("")
+
+data %>% ggplot(aes(x = Heart.Rate, color = Sleep.Disorder, fill = Sleep.Disorder)) +
+  geom_density(aes(y= after_stat(count)), alpha = 0.1) +
+  ggtitle("Heart Rate distribution") +
+  theme_minimal()
+```
+
+### Daily Steps
+
+```{r}
+data %>% ggplot(aes(y= Daily.Steps, x = Sleep.Disorder, fill = Sleep.Disorder)) +
+  geom_violin() +
+  scale_fill_viridis(discrete = TRUE, alpha = 0.6) +
+  theme_minimal() +
+  ggtitle("Daily Steps") + xlab("")
+
+data %>% ggplot(aes(x = Daily.Steps, color = Sleep.Disorder, fill = Sleep.Disorder)) +
+  geom_density(aes(y= after_stat(count)), alpha = 0.1) +
+  ggtitle("Daily Steps distribution") +
+  theme_minimal()
+```
+
+### Sleep Disorder
+
+```{r}
+data %>% select(Sleep.Disorder) %>% 
+  count(Sleep.Disorder) %>% arrange(n) %>% 
+  mutate(labels = scales::percent(n/sum(n))) %>%
+  ggplot(aes(x = "", y = labels, fill = Sleep.Disorder)) +
+    geom_bar(stat="identity", width=1, color="white") +
+    coord_polar("y", start=0) +
+    ggtitle("Sleep Disorder") +
+    theme_void() +
+    geom_text(aes(label = labels), position = position_stack(vjust = 0.5), color = "white") 
+    
+  
+```
+
+-   Nhận xét:
+
+```{r}
+ggcorr(data, label = TRUE)
+```
+
+```{r echo=FALSE}
+plot1 <- data %>% ggplot(aes(x = Stress.Level, color = Sleep.Disorder, fill = Sleep.Disorder)) +
+  geom_density(aes(y= after_stat(count)), alpha = 0.1) +
+  ggtitle("Stress Level distribution") +
+  theme_minimal()
+
+plot2<- data %>% ggplot(aes(x = Heart.Rate, color = Sleep.Disorder, fill = Sleep.Disorder)) +
+  geom_density(aes(y= after_stat(count)), alpha = 0.1) +
+  ggtitle("Heart Rate distribution") +
+  theme_minimal()
+
+plot3 <- data %>% ggplot(aes(y = Heart.Rate, x = Stress.Level, color = Sleep.Disorder)) +
+  geom_point() +
+  geom_smooth(method=lm , aes(fill= Sleep.Disorder), se=TRUE) +
+  theme_minimal()
+library(ggpubr)
+ggarrange(ggarrange(plot1, plot2, ncol = 2, nrow = 1, common.legend = TRUE,
+legend = "bottom"), plot3, ncol = 1, nrow = 2 )
+# # ggarrange(plot1, plot2, ncol = 2, nrow = 1)
+```
+
+**Nhận xét:**
+
+-   Những người không bị rối loạn giấc ngủ có mức độ căng thẳng phân bổ trong khoảng nhỏ hơn 6, nhịp tim từ 65 - 77 nhịp/phút. Cho thấy
+
+-   Những người mắc chứng mất ngủ thường có mức độ căng thẳng trong khoảng 7 - 8, nhịp tim từ 72 - 85 nhịp/phút nghỉ ngơi. Qua đó
+
+```{r include=FALSE}
+Physic_plot <-data %>% ggplot(aes(x = Physical.Activity.Level, color = Sleep.Disorder, fill = Sleep.Disorder)) +
+  geom_density(aes(y= after_stat(count)), alpha = 0.1) +
+  ggtitle("(a)") +
+  theme_minimal()
+
+DStep_plot <- data %>% ggplot(aes(x = Daily.Steps, color = Sleep.Disorder, fill = Sleep.Disorder)) +
+  geom_density(aes(y= after_stat(count)), alpha = 0.1) +
+  ggtitle("(b)") +
+  theme_minimal()
+
+QSleep_plot <- data %>% ggplot(aes(x = Quality.of.Sleep, color = Sleep.Disorder, fill = Sleep.Disorder)) +
+  geom_density(aes(y= after_stat(count)), alpha = 0.1) +
+  ggtitle("(c)") +
+  theme_minimal()
+
+
+Physic_DStep_plot <- data %>% ggplot(aes(x = Physical.Activity.Level, y = Daily.Steps, color = Sleep.Disorder)) +
+  geom_point() +
+  ggtitle("(d)") +
+  theme_minimal()
+
+Physic_QSleep_plot <-data %>% ggplot(aes(x = Quality.of.Sleep, y = Physical.Activity.Level, color = Sleep.Disorder)) +
+  geom_point() +
+  geom_smooth(method=lm , aes(fill= Sleep.Disorder), se=TRUE) +
+  ggtitle("(e)") +
+  theme_minimal()
+
+DStep_QSleep_plot <- data %>% ggplot(aes(x = Quality.of.Sleep, y = Daily.Steps, color = Sleep.Disorder)) +
+  geom_point() +
+  ggtitle("(f)")+
+  geom_smooth(method=lm , aes(fill= Sleep.Disorder), se=TRUE) +
+  theme_minimal()
+
+
+```
+
+```{r echo=FALSE}
+library(ggpubr)
+ggarrange(
+  Physic_plot, DStep_plot, QSleep_plot, Physic_DStep_plot, Physic_QSleep_plot, DStep_QSleep_plot,
+  ncol = 2, nrow = 3,
+  common.legend = TRUE, legend = "bottom"
+)
+```
+
+**Nhận xét:**
+
+-   Qua biểu đồ về mức độ Hoạt động thể chất và số bước đi hàng ngày, có thể thấy được sự tương quan về hai chỉ số này.
+
+-   Những người không mắc bệnh có mức hoạt động thể chất cao lớn hơn 60, số bước đi hàng ngày từ 7000 trở lên, và chất lượng giấc ngủ của nhóm này từ mức 6 trở lên. Từ đó có thể thấy được việc hoạt động thể chất nhiều có thể giúp con người có chất lượng giấc ngủ cao hơn, giảm mắc các chứng bệnh về rối loạn giấc ngủ.
+
+-   Nhóm người không mắc bệnh có mức hoạt động thể chất nhỏ hơn 40, số bước đi hàng ngày nhó hơn 5000, và chất lượng ngủ từ mức 6 trở lên.
+
+-   Những người mắc chứng mất ngủ có mức độ hoạt động thể chất rơi vào khoảng 35 - 55, và số bước đi hàng ngày rơi vào khoảng 5500 - 6500 bước, và chất lượng giấc ngủ chủa nhóm người này nằm trong khoảng 4 - 6. Chứng tỏ việc ít hoạt đông thể chất có ảnh hưởng đến việc mất ngủ của nhóm người này.
+
+-   Những người mắc chứng ngưng thở khi ngủ có mức hoạt động thể chất từ 70 trở lên, số bước đi dao động từ 6000 - 9000 bước/ngày, và chất lượng giấc ngủ trải dài từ 5 - 9. Từ đó cho thấy việc hoạt động thể chất không ảnh hưởng nhiều đến việc ngưng thở khi ngủ ở nhóm người này. Tuy nhiên, việc vận động thể chất vẫn ảnh hưởng đến chất lượng giấc ngủ, chỉ số BMI của nhóm người này.

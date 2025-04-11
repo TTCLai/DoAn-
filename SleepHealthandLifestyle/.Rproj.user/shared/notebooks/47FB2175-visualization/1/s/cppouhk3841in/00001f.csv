@@ -1,0 +1,6 @@
+"0",""
+"0",""
+"0","data %>% ggplot(aes(x = Quality.of.Sleep, color = Sleep.Disorder, fill = Sleep.Disorder)) +"
+"0","  geom_density(aes(y= after_stat(count)), alpha = 0.1) +"
+"0","  ggtitle(""Quality of sleep distribution"") +"
+"0","  theme_minimal()"

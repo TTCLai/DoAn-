@@ -1,0 +1,6 @@
+"0","# rbind(data.frame(model = ""Manual Class"", Accuracy = round(oj.class.acc, 5)), "
+"0","#       data.frame(model = ""Class w/tuneLength"", Accuracy = round(oj.class.acc2, 5)),"
+"0","#       data.frame(model = ""Class w.tuneGrid"", Accuracy = round(oj.class.acc3, 5)),"
+"0","#       data.frame(model = ""Bagging"", Accuracy = round(oj.bag.acc, 5)),"
+"0","#       data.frame(model = ""Random Forest"", Accuracy = round(oj.frst.acc, 5))"
+"0","# ) %>% arrange(desc(Accuracy))"

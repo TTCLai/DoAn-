@@ -1,0 +1,3 @@
+"0","save(rf_model_2, file = ""RFModel.rda"")"
+"0",""
+"0","saveRDS(rf_model_2, file = ""RFModel.rds"")"

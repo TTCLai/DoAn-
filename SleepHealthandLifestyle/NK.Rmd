@@ -1,0 +1,332 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+## PROCESS AND CODE ANALYSIS
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+library(tidyverse) 
+library(dplyr)
+library(ggplot2)
+library(GGally)
+library(caret)
+library(skimr)
+library(rpart)
+library(rpart.plot)
+```
+
+```{r include=FALSE}
+preprocessed.data <- read.csv("Sleep_health_and_lifestyle_dataset.csv")
+data <- preprocessed.data[, c(2:13)] 
+```
+
+## 2. Tiền xử lý dữ liệu
+
+-   Blood Pressure
+
+```{r}
+data$Blood.Pressure <- sub("/", " ", data$Blood.Pressure)
+data <- separate(data, Blood.Pressure, into = c("Systolic", "Diastolic"), sep = " ")
+data$Systolic <- as.numeric(data$Systolic)
+data$Diastolic <- as.numeric(data$Diastolic)
+```
+
+-   BMI Caterogy
+
+```{r}
+data$BMI.Category<- gsub("Normal Weight", "Normal", data$BMI.Category)
+
+data$BMI.Category<- gsub("Obese", "Obesity", data$BMI.Category)
+
+
+```
+
+-   Outcome
+
+```{r}
+data$Sleep.Disorder[data$Sleep.Disorder == "Sleep Apnea"] = "Sleep.Apnea"
+data <- data %>% transform(Sleep.Disorder = as.factor(Sleep.Disorder))
+
+```
+
+-   factor
+
+```{r}
+data$Gender <- as.factor(data$Gender)
+
+data$Occupation <- as.factor(data$Occupation)
+
+data$BMI.Category <- as.factor(data$BMI.Category)
+```
+
+```{r}
+save(data, "ProcessedData.csv")
+```
+
+```{r}
+
+model_data <- data[, -3] 
+saveRDS(model_data, "ModelData.rda")
+```
+
+## 2.1 Trực quan hóa dữ liệu
+
+## 3. Chia dữ liệu
+
+```{r}
+# 
+# set.seed(123)
+# spec = c(train = .7, test = .3)
+# g = sample(cut(
+#   seq(nrow(data)), 
+#   nrow(data)*cumsum(c(0,spec)),
+#   labels = names(spec)
+# ))
+# res = split(data, g)
+# train_data <- res$train
+# test_data <- res$test
+nrow(data)
+
+set.seed(10)
+ind <- sample(2, nrow(data), replace = TRUE, prob = c(0.7, 0.3))
+train_data <- data[ind==1,]
+test_data <- data[ind==2,]
+
+library(ROSE)
+# over <- ovun.sample(Sleep.Disorder~., data = train_data, method = "over")
+
+addmargins(prop.table(table(ind)))
+```
+
+## 4. Decision tree
+
+<https://www.guru99.com/r-decision-trees.html>
+
+<https://rpubs.com/mpfoley73/529130>
+
+-   Sử dụng các thư viện nào?
+
+```{r}
+library(rpart)
+library(rpart.plot)
+```
+
+-   Xây dựng Cây quyết định, sử dụng K-fold cross-validation để đánh giá các giá trị khác nhau để giảm độ phức tạp về chi phí (cost ompexity).
+
+-   Function `rpart()` does both. It returns a model object with a full tree, and it returns a table of error rates produced by various settings of the the complexity parameter. Use the `printcp()` function to view the model details.
+
+```{r}
+decision_tree<- rpart(Sleep.Disorder ~ .,
+                      data = train_data,
+                      method = 'class',
+                      xval = 10, # k-fold với k = 10
+                      )
+rpart.plot(decision_tree,
+           type=0, 
+           extra = 111,
+           yesno = TRUE)
+```
+
+-   Ý nghĩa:
+    -   If MBI.Caterogy = Normal then Sleep.Disorder == None
+    -   If BMI.Category = Obesity, Overweight and Occupation = Accountant, Doctor, Engineer, Salesperson, Teacher THEN Sleep.Disorder == Insomnia
+    -   ...
+
+```{r}
+printcp(decision_tree)
+
+```
+
+-   Nút gốc chứa **98** lỗi trong số **261** giá trị (37.5%).
+
+-   Bước thứ hai là tỉa cây theo kích thước tối ưu (để tránh trồng quá nhiều).
+
+-   Bảng CP trong phần tóm tắt mô hình hiển thị các số liệu thống kê liên quan để lựa chọn thông số cắt tỉa phù hợp.
+
+    -   Cột lỗi rel là tỷ lệ lỗi/lỗi nút gốc được tạo ra khi tỉa cây bằng cách sử dụng tham số độ phức tạp CP để phân tách nsplits.
+
+    -   Cột xerror hiển thị tỷ lệ lỗi.
+
+    -   Biểu đồ xerror vs cp cho thấy mối quan hệ.
+
+```{r}
+plotcp(decision_tree)
+```
+
+-   Đường đứt nét được đặt ở mức tối thiểu xerror + xstd.
+
+-   Bất kỳ giá trị nào dưới dòng sẽ được coi là có ý nghĩa thống kê. Lựa chọn tốt cho CP thường là giá trị lớn nhất mà sai số nằm trong độ lệch chuẩn của sai số tối thiểu. Trong trường hợp này, cp nhỏ nhất là **0,01.**
+
+-   Một cách hay để phát hiện và nắm bắt cp chính xác là sử dụng hàm which.min(), nhưng nếu bạn muốn chọn cây tương đương về mặt thống kê nhỏ nhất, hãy chỉ định nó theo cách thủ công.
+
+-   **Sử dụng hàm prune() để tỉa cây bằng cách chỉ định cp (cost complexity) độ phức tạp chi phí liên quan.**
+
+```{r}
+re_fit <- prune(decision_tree, 
+                cp = decision_tree$cptable[which.min(decision_tree$cptable[, "xerror"]), "CP"])
+
+# rm(fit)
+rpart.plot(re_fit, yesno = TRUE)
+
+```
+
+```{r}
+re_fit
+
+```
+
+-   Case 1: for fit
+
+```{r}
+predict_unseen <- predict(decision_tree, test_data, type = 'class')
+table_mat <- table(test_data$Sleep.Disorder, predict_unseen)
+table_mat
+```
+
+```{r}
+accuracy_Test <- sum(diag(table_mat)) / sum(table_mat)
+print(paste('Accuracy for test', accuracy_Test))
+```
+
+-   Case 2: for re_fit
+
+```{r}
+re_pred <- predict(re_fit, 
+                   test_data,
+                   type = "class")
+plot(test_data$Sleep.Disorder, re_pred,
+     main = " ",
+     xlab = "Actual",
+     ylab = "Predicted")
+```
+
+```{r}
+re_fit_conf <- confusionMatrix(data = re_pred, 
+                                  reference = test_data$Sleep.Disorder)
+re_fit_conf
+```
+
+### Tune the hyper-parameters
+
+```{r}
+# accuracy_tune <- function(fit) {
+#   predict_unseen <- predict(fit, test_data, type = 'class')
+#   table_mat <- table(test_data$Sleep.Disorder, predict_unseen)
+#   accuracy_Test <- sum(diag(table_mat)) / sum(table_mat)
+#   accuracy_Test
+# }
+
+control <- rpart.control(minsplit = 4,
+                         minbucket = round(5 / 3),
+                         maxdepth = 3,
+                         cp = 0)
+# tune_fit <- rpart(Sleep.Disorder~., data = train_data, method = 'class', control = control)
+
+tune_fit <- train(
+  Sleep.Disorder ~ .,
+  data = train_data,
+  method = "rpart",
+  tuneLength = 20,
+  metric = 'ROC',
+  trControl = trainControl(
+    method = 'cv',
+    number = 10,
+    savePredictions = 'final',
+    classProbs =  TRUE,
+    summaryFunction = 
+  )
+)
+tune_fit
+# accuracy_tune(tune_fit)
+
+tune_fit$bestTune
+ # chạy giải thuật tại best tune, tìm ra accurancy
+tune_fit$results
+
+
+```
+
+-   Biểu diễn các tune, biểu đồ để chọn ra best tune
+
+```{r}
+# rpart.plot(tune_fit)
+plot(tune_fit)
+```
+
+```{r}
+tune_pre <- predict(tune_fit, test_data, type = "raw")
+plot(test_data$Sleep.Disorder, tune_pre,
+     main = "Predicted vs. Actual",
+     xlab = "Actual", 
+     ylab = "Predicted")
+```
+
+```{r}
+(tune_conf <- confusionMatrix(data = tune_pre, 
+                            reference = test_data$Sleep.Disorder))
+```
+
+-   Liệt kê ra các luật đã tính được
+
+## 5. Random Forest
+
+```{r include=FALSE}
+library(randomForest)
+library(caret)
+```
+
+```{r}
+rf_model <- train(Sleep.Disorder~.,
+                  data = train_data,
+                  method = "ranger",
+                  tuneLength = 5,
+                  metric = "ROC",
+                  trControl = trainControl(
+                 method = "cv",  # k-fold cross validation
+                 number = 10,  # 10 folds
+                 savePredictions = "final", # save predictions for the optimal tuning parameter1
+                 classProbs = TRUE,  # return class probabilities in addition to predicted values
+                 summaryFunction = defaultSummary  # for binary response variable
+                 )
+                  )
+rf_model
+```
+
+```{r}
+plot(rf_model)
+```
+
+```{r}
+rf_pred <- predict(rf_model, test_data, type = "raw")
+plot(test_data$Sleep.Disorder, rf_pred, 
+     main = "Random Forest Classification: Predicted vs. Actual",
+     xlab = "Actual",
+     ylab = "Predicted")
+```
+
+-   cĐánh giá kết quả đat được???
+
+```{r}
+(rf_conf <- confusionMatrix(data = rf_pred, reference =  test_data$Sleep.Disorder)
+)
+```
+
+```{r}
+(rf_acc <- as.numeric(rf_conf$overall[1]))
+# rm(rf_pred)
+# rm(rf_conf)
+```
+
+-   Đánh giá nhiều mô hình
+
+```{r}
+# rbind(data.frame(model = "Manual Class", Accuracy = round(oj.class.acc, 5)), 
+#       data.frame(model = "Class w/tuneLength", Accuracy = round(oj.class.acc2, 5)),
+#       data.frame(model = "Class w.tuneGrid", Accuracy = round(oj.class.acc3, 5)),
+#       data.frame(model = "Bagging", Accuracy = round(oj.bag.acc, 5)),
+#       data.frame(model = "Random Forest", Accuracy = round(oj.frst.acc, 5))
+# ) %>% arrange(desc(Accuracy))
+```
+
+-   ROC Curves

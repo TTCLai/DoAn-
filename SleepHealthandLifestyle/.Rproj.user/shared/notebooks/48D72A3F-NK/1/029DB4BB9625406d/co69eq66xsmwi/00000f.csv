@@ -1,0 +1,5 @@
+"0","rf_pred <- predict(rf_model, test_data, type = ""raw"")"
+"0","plot(test_data$Sleep.Disorder, rf_pred, "
+"0","     main = ""Random Forest Classification: Predicted vs. Actual"","
+"0","     xlab = ""Actual"","
+"0","     ylab = ""Predicted"")"
